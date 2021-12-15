@@ -8,11 +8,21 @@ function Question(props) {
     <div className="question">
       <div 
         className="question-img" 
-        style={{ backgroundImage:`url(${props.image})` }}
+        style={{ backgroundImage:`url(${props.question.image})` }}
         >
           &nbsp;
       </div>
-      <div className="question-text">{props.question}</div>
+      <div className="question-text">{props.question.question}</div>
+    </div>
+  );
+}
+
+function Answer(props) {
+  return (
+    <div className="answer">
+      <div className="answer-question">{props.question.question}</div>
+      <div className="answer-text">{props.question.answer}</div>
+      <div className="answer-song">{props.question.artist} - {props.question.song}</div>
     </div>
   );
 }
@@ -35,16 +45,25 @@ class Round extends React.Component {
   }
 
   render() {
+    let content;
+    switch (this.props.part) {
+      case "Question":
+        content = <Question question={this.props.question} />
+        break;
+      case "Answer":
+        content = <Answer question={this.props.question} />
+        break;
+      default:
+        console.error("Unknown part "+this.props.part);
+        break;
+    }
     return (
       <div className="round">
         <header>
             <h1>7e TC Sterrenbos quiz</h1>
           </header>
           <div className="logo" />
-          <Question
-            question={this.props.question.question}
-            image={this.props.question.image}
-          />
+          {content}
           <footer><h3>{this.props.round.title} - Vraag {this.props.question.number}</h3></footer>
           <Timer startTime={this.state.startTime} />
       </div>
@@ -116,6 +135,7 @@ class Quiz extends React.Component {
       getQuestions(this.getCurrentRound().sheet).then(questions => 
         this.setState({
           show: 'Round',
+          part: 'Question',
           questions: questions,
           currentRoundIndex: 0,
           currentQuestionIndex: 0,
@@ -131,6 +151,28 @@ class Quiz extends React.Component {
       this.setState({
         currentQuestionIndex: (questionIndex+1)
       });
+    } else {
+      switch (this.state.part) {
+        case "Question":
+          this.setState({
+            part: 'Answer',
+            currentQuestionIndex: 0
+          });
+          break;
+        case "Answer":
+          const roundIndex = this.state.currentRoundIndex;
+          if (roundIndex < this.state.rounds.length - 1) {
+            this.setState({
+              part: 'Question',
+              currentQuestionIndex: 0,
+              currentRoundIndex: (roundIndex+1)
+            });
+          }
+          break;
+        default:
+          console.error("Unknown part "+this.props.part);
+          break;
+      }
     }
   }
 
@@ -192,7 +234,7 @@ class Quiz extends React.Component {
       case 'Round':
         const round = this.getCurrentRound();
         const question = this.getCurrentQuestion();
-        content = <Round round={round} question={question} />;
+        content = <Round round={round} question={question} part={this.state.part} />;
         break;
       default:
         console.error("Unknown show state "+this.state.show);
