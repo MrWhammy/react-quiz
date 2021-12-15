@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import questions from './questions.json'
+import questions from './questions.json';
+import { getRounds } from './questions';
 import './index.css';
 
 function Question(props) {
@@ -36,8 +37,8 @@ class Timer extends React.Component {
     const startTime = this.props.startTime;
     const now = this.state.time;
     const totalSeconds = Math.floor((now - startTime) / 1000);
-    const minutes = totalSeconds > 0 ? Math.floor(totalSeconds / 60) : 0;
-    const seconds = totalSeconds > 0 ? totalSeconds - (minutes * 60) : 0;
+    const seconds = totalSeconds > 0 ? totalSeconds % 60 : 0;
+    const minutes = totalSeconds > 0 ? (totalSeconds - seconds) / 60 : 0;
     return <div className='timer'><h3>{minutes.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})}:{seconds.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})}</h3></div>
   }
 }
@@ -46,6 +47,7 @@ class Quiz extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      rounds: [],
       questions: questions,
       currentQuestionIndex: 0,
       startTime: Date.now()
@@ -97,8 +99,17 @@ class Quiz extends React.Component {
     }
   }
 
+  componentDidMount() {
+    getRounds().then(rounds => {
+      this.setState({
+        rounds: rounds
+      });
+    });
+  }
+
   render() {
     const current = this.state.questions[this.state.currentQuestionIndex];
+    const round = current.round < this.state.rounds.length ? this.state.rounds[current.round].title : "Ronde ?";
 
     return (
       <div 
@@ -114,7 +125,7 @@ class Quiz extends React.Component {
           question={current.question}
           image={current.image}
         />
-        <footer><h3>Ronde {current.round} - Vraag {current.number}</h3></footer>
+        <footer><h3>{round} - Vraag {current.number}</h3></footer>
         <Timer startTime={this.state.startTime} />
       </div>
     );
