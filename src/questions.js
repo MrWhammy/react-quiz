@@ -7,11 +7,12 @@ class Sheets {
     }
 
     buildUrl(sheet) {
-        return (`https://docs.google.com/spreadsheets/d/${this.id}/gviz/tq?tqx=out:csv&sheet=${sheet}`);
+        //return (`https://docs.google.com/spreadsheets/d/${this.id}/gviz/tq?tqx=out:csv&sheet=${sheet}`);
+        return `https://docs.google.com/spreadsheets/d/${this.id}/export?format=csv&id=${this.id}&gid=${sheet}`;
     }
 
     getRounds() {
-        return fetch(this.buildUrl('Rounds'))
+        return fetch(this.buildUrl('588979363'))
             .then(response => response.text())
             .then(responseText => parse(responseText))
             .then(csv => csv.splice(1)) // remove header

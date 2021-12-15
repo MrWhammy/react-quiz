@@ -84,7 +84,7 @@ class Round extends React.Component {
         </header>
         <div className="logo" />
         {content}
-        <footer><h3>{this.props.round.title} - Vraag {this.props.question.number}</h3></footer>
+        <footer><h3>{this.props.round.title} - Vraag {this.props.question.number}/{this.props.totalQuestions}</h3></footer>
         {this.props.part === 'Question' &&
           <Timer startTime={this.state.startTime} />
         }
@@ -125,13 +125,17 @@ class Quiz extends React.Component {
       show: 'Title',
       rounds: [],
       questions: [],
-      currentRoundIndex: 0,
+      currentRoundIndex: -1,
       currentQuestionIndex: 0
     }
   }
 
   getCurrentRound() {
-    return this.state.currentRoundIndex < this.state.rounds.length ? this.state.rounds[this.state.currentRoundIndex] : { title: "Round X" };
+    return this.getRound(this.state.currentRoundIndex);
+  }
+
+  getRound(roundIndex) {
+    return roundIndex < this.state.rounds.length ? this.state.rounds[roundIndex] : { title: "Round X" };
   }
 
   getCurrentQuestion() {
@@ -141,7 +145,7 @@ class Quiz extends React.Component {
   next() {
     switch (this.state.show) {
       case 'Title':
-        this.startQuiz();
+        this.toNextRound();
         break;
       case 'RoundTitle':
         this.startRound();
@@ -152,21 +156,6 @@ class Quiz extends React.Component {
       default:
         console.error("Unknown show state " + this.state.show);
         break;
-    }
-  }
-
-  startQuiz() {
-    if (this.state.rounds.length > 0) {
-      getQuestions(this.getCurrentRound().sheet).then(questions =>
-        this.setState({
-          show: 'RoundTitle',
-          part: 'Question',
-          questions: questions,
-          currentRoundIndex: 0,
-          currentQuestionIndex: 0,
-          startTime: Date.now()
-        })
-      );
     }
   }
 
@@ -189,7 +178,7 @@ class Quiz extends React.Component {
           this.toAnswerRoundTitle();
           break;
         case "Answer":
-          this.toQuestionRoundTitle();
+          this.toNextRound();
           break;
         default:
           console.error("Unknown part " + this.props.part);
@@ -206,28 +195,66 @@ class Quiz extends React.Component {
     });
   }
 
-  toQuestionRoundTitle() {
+  toNextRound() {
     const roundIndex = this.state.currentRoundIndex;
     if (roundIndex < this.state.rounds.length - 1) {
-      this.setState({
-        show: 'RoundTitle',
-        part: 'Question',
-        currentQuestionIndex: 0,
-        currentRoundIndex: (roundIndex + 1)
-      });
+      const newRoundIndex = roundIndex + 1;
+      this.toRound(newRoundIndex);
     }
   }
 
-  previous() {
-    if (this.state.show === 'Round') {
-      this.previousQuestion();
+  toRound(newRoundIndex) {
+    getQuestions(this.getRound(newRoundIndex).sheet).then(questions => this.setState({
+      show: 'RoundTitle',
+      part: 'Question',
+      questions: questions,
+      currentQuestionIndex: 0,
+      currentRoundIndex: newRoundIndex,
+      startTime: Date.now()
+    })
+    );
+  }
+
+  toPreviousRound() {
+    const roundIndex = this.state.currentRoundIndex;
+    const newRoundIndex = roundIndex > 0 ? (roundIndex - 1) : 0;
+    this.toRound(newRoundIndex);
+  }
+
+  previous(force) {
+    switch (this.state.show) {
+      case 'RoundTitle':
+        if (force) {
+          this.toPreviousRound();
+        }
+        break;
+      case 'Round':
+        this.previousQuestion(force);
+        break;
+      default:
+        console.error("Unknown show state " + this.state.show);
+        break;
     }
   }
 
-  previousQuestion() {
+  previousQuestion(force) {
     const question = this.state.currentQuestionIndex;
     if (question > 0) {
       this.setState({ currentQuestionIndex: (question - 1) });
+    } else {
+      switch (this.state.part) {
+        case "Question":
+          if (force) {
+            this.toRound(this.state.currentRoundIndex);
+          }
+          break;
+        case "Answer":
+          this.toAnswerRoundTitle();
+          break;
+        default:
+          console.error("Unknown part " + this.props.part);
+          break;
+      }
     }
   }
 
@@ -243,11 +270,11 @@ class Quiz extends React.Component {
         break;
       case "Up": // IE/Edge specific value
       case "ArrowUp":
-        this.previous();
+        this.previous(event.ctrlKey);
         break;
       case "Left": // IE/Edge specific value
       case "ArrowLeft":
-        this.previous();
+        this.previous(event.ctrlKey);
         break;
       case "Right": // IE/Edge specific value
       case "ArrowRight":
@@ -280,7 +307,7 @@ class Quiz extends React.Component {
       case 'Round':
         const round = this.getCurrentRound();
         const question = this.getCurrentQuestion();
-        content = <Round round={round} question={question} part={this.state.part} />;
+        content = <Round round={round} question={question} totalQuestions={this.state.questions.length} part={this.state.part} />;
         break;
       default:
         console.error("Unknown show state " + this.state.show);
