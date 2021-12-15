@@ -61,6 +61,32 @@ body {
   grid-template-rows: 1fr;
 }
 
+.roundTitle {
+  grid-row: 3 / 5;
+  grid-column: 1 / 3;
+
+  display: inline-grid;
+  grid-template-rows: 2fr 1fr;
+}
+
+.roundTitleText {
+  grid-row: 1;
+  align-self: center;
+
+  font-size: 8em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.roundTitleAnswer {
+  grid-row: 2;
+  align-self: center;
+
+  font-size: 5em;
+  font-weight: bold;
+  text-align: center;
+}
+
 .round {
   background-color: #e6eedd;
   width: 100vw;

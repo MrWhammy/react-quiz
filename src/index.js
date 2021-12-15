@@ -6,11 +6,11 @@ import './index.css';
 function Question(props) {
   return (
     <div className="question">
-      <div 
-        className="question-img" 
-        style={{ backgroundImage:`url(${props.question.image})` }}
-        >
-          &nbsp;
+      <div
+        className="question-img"
+        style={{ backgroundImage: `url(${props.question.image})` }}
+      >
+        &nbsp;
       </div>
       <div className="question-text">{props.question.question}</div>
     </div>
@@ -29,11 +29,31 @@ function Answer(props) {
 
 function Title(props) {
   return (<div className="title">
-        <header></header>
-          <div className="logo" />
-          <span className="titleText">7e TC Sterrenbos quiz</span>
-          <footer></footer>
-      </div>);
+    <header></header>
+    <div className="logo" />
+    <span className="titleText">7e TC Sterrenbos quiz</span>
+    <footer></footer>
+  </div>);
+}
+
+class RoundTitle extends React.Component {
+  render() {
+    return (
+      <div className="title">
+        <header>
+          <h1>7e TC Sterrenbos quiz</h1>
+        </header>
+        <div className="logo" />
+        <div className='roundTitle'>
+          <span className="roundTitleText">{this.props.round.title}</span>
+          {this.props.part === 'Answer' &&
+            <span className="roundTitleAnswer">De antwoorden</span>
+          }
+        </div>
+        <footer><h3>{this.props.round.title}</h3></footer>
+      </div>
+    );
+  }
 }
 
 class Round extends React.Component {
@@ -54,20 +74,20 @@ class Round extends React.Component {
         content = <Answer question={this.props.question} />
         break;
       default:
-        console.error("Unknown part "+this.props.part);
+        console.error("Unknown part " + this.props.part);
         break;
     }
     return (
       <div className="round">
         <header>
-            <h1>7e TC Sterrenbos quiz</h1>
-          </header>
-          <div className="logo" />
-          {content}
-          <footer><h3>{this.props.round.title} - Vraag {this.props.question.number}</h3></footer>
-          {this.props.part === 'Question' &&
+          <h1>7e TC Sterrenbos quiz</h1>
+        </header>
+        <div className="logo" />
+        {content}
+        <footer><h3>{this.props.round.title} - Vraag {this.props.question.number}</h3></footer>
+        {this.props.part === 'Question' &&
           <Timer startTime={this.state.startTime} />
-          }
+        }
       </div>
     );
   }
@@ -94,7 +114,7 @@ class Timer extends React.Component {
     const totalSeconds = Math.floor((now - startTime) / 1000);
     const seconds = totalSeconds > 0 ? totalSeconds % 60 : 0;
     const minutes = totalSeconds > 0 ? (totalSeconds - seconds) / 60 : 0;
-    return <div className='timer'><h3>{minutes.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})}:{seconds.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})}</h3></div>
+    return <div className='timer'><h3>{minutes.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: false })}:{seconds.toLocaleString('en-US', { minimumIntegerDigits: 2, useGrouping: false })}</h3></div>
   }
 }
 
@@ -123,20 +143,23 @@ class Quiz extends React.Component {
       case 'Title':
         this.startQuiz();
         break;
+      case 'RoundTitle':
+        this.startRound();
+        break;
       case 'Round':
         this.nextQuestion();
         break;
       default:
-        console.error("Unknown show state "+this.state.show);
+        console.error("Unknown show state " + this.state.show);
         break;
     }
   }
 
   startQuiz() {
     if (this.state.rounds.length > 0) {
-      getQuestions(this.getCurrentRound().sheet).then(questions => 
+      getQuestions(this.getCurrentRound().sheet).then(questions =>
         this.setState({
-          show: 'Round',
+          show: 'RoundTitle',
           part: 'Question',
           questions: questions,
           currentRoundIndex: 0,
@@ -147,34 +170,51 @@ class Quiz extends React.Component {
     }
   }
 
+  startRound() {
+    this.setState({
+      show: 'Round',
+      currentQuestionIndex: 0
+    });
+  }
+
   nextQuestion() {
     const questionIndex = this.state.currentQuestionIndex;
     if (questionIndex < this.state.questions.length - 1) {
       this.setState({
-        currentQuestionIndex: (questionIndex+1)
+        currentQuestionIndex: (questionIndex + 1)
       });
     } else {
       switch (this.state.part) {
         case "Question":
-          this.setState({
-            part: 'Answer',
-            currentQuestionIndex: 0
-          });
+          this.toAnswerRoundTitle();
           break;
         case "Answer":
-          const roundIndex = this.state.currentRoundIndex;
-          if (roundIndex < this.state.rounds.length - 1) {
-            this.setState({
-              part: 'Question',
-              currentQuestionIndex: 0,
-              currentRoundIndex: (roundIndex+1)
-            });
-          }
+          this.toQuestionRoundTitle();
           break;
         default:
-          console.error("Unknown part "+this.props.part);
+          console.error("Unknown part " + this.props.part);
           break;
       }
+    }
+  }
+
+  toAnswerRoundTitle() {
+    this.setState({
+      show: 'RoundTitle',
+      part: 'Answer',
+      currentQuestionIndex: 0
+    });
+  }
+
+  toQuestionRoundTitle() {
+    const roundIndex = this.state.currentRoundIndex;
+    if (roundIndex < this.state.rounds.length - 1) {
+      this.setState({
+        show: 'RoundTitle',
+        part: 'Question',
+        currentQuestionIndex: 0,
+        currentRoundIndex: (roundIndex + 1)
+      });
     }
   }
 
@@ -187,7 +227,7 @@ class Quiz extends React.Component {
   previousQuestion() {
     const question = this.state.currentQuestionIndex;
     if (question > 0) {
-      this.setState({currentQuestionIndex: (question-1)});
+      this.setState({ currentQuestionIndex: (question - 1) });
     }
   }
 
@@ -195,7 +235,7 @@ class Quiz extends React.Component {
     if (event.defaultPrevented) {
       return; // Do nothing if the event was already processed
     }
-  
+
     switch (event.key) {
       case "Down": // IE/Edge specific value
       case "ArrowDown":
@@ -231,7 +271,11 @@ class Quiz extends React.Component {
     let content;
     switch (this.state.show) {
       case 'Title':
-        content =  <Title />;
+        content = <Title />;
+        break;
+      case 'RoundTitle':
+        const titleRound = this.getCurrentRound();
+        content = <RoundTitle round={titleRound} part={this.state.part} />;
         break;
       case 'Round':
         const round = this.getCurrentRound();
@@ -239,22 +283,22 @@ class Quiz extends React.Component {
         content = <Round round={round} question={question} part={this.state.part} />;
         break;
       default:
-        console.error("Unknown show state "+this.state.show);
+        console.error("Unknown show state " + this.state.show);
         break;
     }
-  
+
     return (
-      <div 
+      <div
         className="quiz"
         onKeyDown={(e) => this.onKeyPressed(e)}
         tabIndex="0"
-        >
+      >
         {content}
       </div>
     );
   }
 
-  
+
 }
 
 // ========================================
