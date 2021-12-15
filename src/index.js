@@ -65,7 +65,9 @@ class Round extends React.Component {
           <div className="logo" />
           {content}
           <footer><h3>{this.props.round.title} - Vraag {this.props.question.number}</h3></footer>
+          {this.props.part === 'Question' &&
           <Timer startTime={this.state.startTime} />
+          }
       </div>
     );
   }
