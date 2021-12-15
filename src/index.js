@@ -18,7 +18,23 @@ function Question(props) {
   );
 }
 
+function Title(props) {
+  return (<div className="title">
+        <header></header>
+          <div className="logo" />
+          <span className="titleText">7e TC Sterrenbos quiz</span>
+          <footer></footer>
+      </div>);
+}
+
 class Round extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      startTime: Date.now(),
+    };
+  }
+
   render() {
     return (
       <div className="round">
@@ -31,7 +47,7 @@ class Round extends React.Component {
             image={this.props.question.image}
           />
           <footer><h3>{this.props.round.title} - Vraag {this.props.question.number}</h3></footer>
-          <Timer startTime={this.props.startTime} />
+          <Timer startTime={this.state.startTime} />
       </div>
     );
   }
@@ -66,20 +82,48 @@ class Quiz extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      show: 'Title',
       rounds: [],
+      currentRoundIndex: 0,
+      currentQuestionIndex: 0
+    }
+  }
+
+  next() {
+    switch (this.state.show) {
+      case 'Title':
+        this.startQuiz();
+        break;
+      case 'Round':
+        this.nextQuestion();
+        break;
+      default:
+        console.error("Unknown show state "+this.state.show);
+        break;
+    }
+  }
+
+  startQuiz() {
+    this.setState({
+      show: 'Round',
       currentRoundIndex: 0,
       currentQuestionIndex: 0,
       startTime: Date.now()
-    }
+    });
   }
 
   nextQuestion() {
     const questionIndex = this.state.currentQuestionIndex;
     if (questionIndex < questions.length - 1) {
       this.setState({
-        currentQuestionIndex: (questionIndex+1),
-        startTime: Date.now()
+        currentQuestionIndex: (questionIndex+1)
       });
+    }
+  }
+
+  previous() {
+    if (this.state.show === 'Round') {
+      this.previousQuestion();
     }
   }
 
@@ -98,19 +142,19 @@ class Quiz extends React.Component {
     switch (event.key) {
       case "Down": // IE/Edge specific value
       case "ArrowDown":
-        this.nextQuestion();
+        this.next();
         break;
       case "Up": // IE/Edge specific value
       case "ArrowUp":
-        this.previousQuestion();
+        this.previous();
         break;
       case "Left": // IE/Edge specific value
       case "ArrowLeft":
-        this.previousQuestion();
+        this.previous();
         break;
       case "Right": // IE/Edge specific value
       case "ArrowRight":
-        this.nextQuestion();
+        this.next();
         break;
       default:
         // Do nothing
@@ -127,15 +171,28 @@ class Quiz extends React.Component {
   }
 
   render() {
-    const round = this.state.currentRoundIndex < this.state.rounds.length ? this.state.rounds[this.state.currentRoundIndex] : { title: "Round X" };
-    const question = questions[this.state.currentQuestionIndex];
+    let content;
+    switch (this.state.show) {
+      case 'Title':
+        content =  <Title />;
+        break;
+      case 'Round':
+        const round = this.state.currentRoundIndex < this.state.rounds.length ? this.state.rounds[this.state.currentRoundIndex] : { title: "Round X" };
+        const question = questions[this.state.currentQuestionIndex];
+        content = <Round round={round} question={question} />;
+        break;
+      default:
+        console.error("Unknown show state "+this.state.show);
+        break;
+    }
+  
     return (
       <div 
         className="quiz"
         onKeyDown={(e) => this.onKeyPressed(e)}
         tabIndex="0"
         >
-        <Round round={round} question={question} startTime={this.state.startTime} />
+        {content}
       </div>
     );
   }
