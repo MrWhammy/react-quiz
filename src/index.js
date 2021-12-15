@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import questions from './questions.json';
-import { getRounds } from './questions';
+import { getQuestions, getRounds } from './questions';
 import './index.css';
 
 function Question(props) {
@@ -84,9 +83,18 @@ class Quiz extends React.Component {
     this.state = {
       show: 'Title',
       rounds: [],
+      questions: [],
       currentRoundIndex: 0,
       currentQuestionIndex: 0
     }
+  }
+
+  getCurrentRound() {
+    return this.state.currentRoundIndex < this.state.rounds.length ? this.state.rounds[this.state.currentRoundIndex] : { title: "Round X" };
+  }
+
+  getCurrentQuestion() {
+    return this.state.currentQuestionIndex < this.state.questions.length ? this.state.questions[this.state.currentQuestionIndex] : {};
   }
 
   next() {
@@ -104,17 +112,22 @@ class Quiz extends React.Component {
   }
 
   startQuiz() {
-    this.setState({
-      show: 'Round',
-      currentRoundIndex: 0,
-      currentQuestionIndex: 0,
-      startTime: Date.now()
-    });
+    if (this.state.rounds.length > 0) {
+      getQuestions(this.getCurrentRound().sheet).then(questions => 
+        this.setState({
+          show: 'Round',
+          questions: questions,
+          currentRoundIndex: 0,
+          currentQuestionIndex: 0,
+          startTime: Date.now()
+        })
+      );
+    }
   }
 
   nextQuestion() {
     const questionIndex = this.state.currentQuestionIndex;
-    if (questionIndex < questions.length - 1) {
+    if (questionIndex < this.state.questions.length - 1) {
       this.setState({
         currentQuestionIndex: (questionIndex+1)
       });
@@ -177,8 +190,8 @@ class Quiz extends React.Component {
         content =  <Title />;
         break;
       case 'Round':
-        const round = this.state.currentRoundIndex < this.state.rounds.length ? this.state.rounds[this.state.currentRoundIndex] : { title: "Round X" };
-        const question = questions[this.state.currentQuestionIndex];
+        const round = this.getCurrentRound();
+        const question = this.getCurrentQuestion();
         content = <Round round={round} question={question} />;
         break;
       default:
