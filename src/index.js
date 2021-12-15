@@ -18,6 +18,25 @@ function Question(props) {
   );
 }
 
+class Round extends React.Component {
+  render() {
+    return (
+      <div className="round">
+        <header>
+            <h1>7e TC Sterrenbos quiz</h1>
+          </header>
+          <div className="logo" />
+          <Question
+            question={this.props.question.question}
+            image={this.props.question.image}
+          />
+          <footer><h3>{this.props.round.title} - Vraag {this.props.question.number}</h3></footer>
+          <Timer startTime={this.props.startTime} />
+      </div>
+    );
+  }
+}
+
 class Timer extends React.Component {
   constructor(props) {
     super(props);
@@ -48,7 +67,7 @@ class Quiz extends React.Component {
     super(props);
     this.state = {
       rounds: [],
-      questions: questions,
+      currentRoundIndex: 0,
       currentQuestionIndex: 0,
       startTime: Date.now()
     }
@@ -56,7 +75,7 @@ class Quiz extends React.Component {
 
   nextQuestion() {
     const questionIndex = this.state.currentQuestionIndex;
-    if (questionIndex < this.state.questions.length - 1) {
+    if (questionIndex < questions.length - 1) {
       this.setState({
         currentQuestionIndex: (questionIndex+1),
         startTime: Date.now()
@@ -108,25 +127,15 @@ class Quiz extends React.Component {
   }
 
   render() {
-    const current = this.state.questions[this.state.currentQuestionIndex];
-    const round = current.round < this.state.rounds.length ? this.state.rounds[current.round].title : "Ronde ?";
-
+    const round = this.state.currentRoundIndex < this.state.rounds.length ? this.state.rounds[this.state.currentRoundIndex] : { title: "Round X" };
+    const question = questions[this.state.currentQuestionIndex];
     return (
       <div 
         className="quiz"
         onKeyDown={(e) => this.onKeyPressed(e)}
         tabIndex="0"
         >
-        <header>
-          <h1>7e TC Sterrenbos quiz</h1>
-        </header>
-        <div className="logo" />
-        <Question
-          question={current.question}
-          image={current.image}
-        />
-        <footer><h3>{round} - Vraag {current.number}</h3></footer>
-        <Timer startTime={this.state.startTime} />
+        <Round round={round} question={question} startTime={this.state.startTime} />
       </div>
     );
   }
