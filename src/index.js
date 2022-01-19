@@ -6,12 +6,7 @@ import './index.css';
 function Question(props) {
   return (
     <div className="question">
-      <div
-        className="question-img"
-        style={{ backgroundImage: `url(${props.question.image})` }}
-      >
-        &nbsp;
-      </div>
+      <img className='question-img' src={props.question.image} alt={props.question.number}></img>
       <div className="question-text">{props.question.question}</div>
     </div>
   );
