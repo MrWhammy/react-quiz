@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { getQuestions, getRounds } from './questions';
 import './index.css';
 
@@ -324,8 +324,6 @@ class Quiz extends React.Component {
 }
 
 // ========================================
-
-ReactDOM.render(
-  <Quiz />,
-  document.getElementById('root')
-);
+const container = document.getElementById('root');
+const root = createRoot(container); // createRoot(container!) if you use TypeScript
+root.render(<Quiz />);
