@@ -22,11 +22,29 @@ function Answer(props) {
     );
 }
 
-function Title() {
+function Title(props) {
     return (<div className="title">
         <header></header>
         <div className="logo"/>
-        <span className="titleText">7e TC Sterrenbos quiz</span>
+        <span className="titleText">
+        {props.loaded ?
+            "7e TC Sterrenbos quiz" :
+            <div className="lds-spinner">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        }
+            </span>
         <footer></footer>
     </div>);
 }
@@ -52,12 +70,6 @@ class RoundTitle extends React.Component {
 }
 
 class Round extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            startTime: Date.now(),
-        };
-    }
 
     render() {
         let content;
@@ -82,7 +94,7 @@ class Round extends React.Component {
                 <footer><h3>{this.props.round.title} -
                     Vraag {this.props.question.number}/{this.props.totalQuestions}</h3></footer>
                 {this.props.part === 'Question' &&
-                <Timer startTime={this.state.startTime}/>
+                <Timer startTime={this.props.startTime}/>
                 }
             </div>
         );
@@ -126,7 +138,8 @@ class Quiz extends React.Component {
             rounds: [],
             questions: [],
             currentRoundIndex: -1,
-            currentQuestionIndex: 0
+            currentQuestionIndex: 0,
+            loaded: false,
         }
     }
 
@@ -297,7 +310,7 @@ class Quiz extends React.Component {
             currentQuestionIndex: this.state.currentQuestionIndex,
             show: this.state.show,
             part: this.state.part,
-            startTime: this.state.startTime
+            startTime: this.state.startTime,
         })));
     }
 
@@ -313,15 +326,18 @@ class Quiz extends React.Component {
                             part: storedState.part,
                             currentRoundIndex: storedState.currentRoundIndex,
                             currentQuestionIndex: storedState.currentQuestionIndex,
+                            startTime: storedState.startTime,
                             rounds: rounds,
                             questions: questions,
-                            startTime: storedState.startTime
+                            loaded: true,
                         });
                     });
                     break;
                 default:
                     this.setState({
-                        rounds: rounds
+                        startTime: Date.now(),
+                        rounds: rounds,
+                        loaded: true,
                     });
                     break;
             }
@@ -332,7 +348,7 @@ class Quiz extends React.Component {
         let content;
         switch (this.state.show) {
             case 'Title':
-                content = <Title/>;
+                content = <Title loaded={this.state.loaded}/>;
                 break;
             case 'RoundTitle':
                 const titleRound = this.getCurrentRound();
@@ -341,7 +357,8 @@ class Quiz extends React.Component {
             case 'Round':
                 const round = this.getCurrentRound();
                 const question = this.getCurrentQuestion();
-                content = <Round round={round} question={question} totalQuestions={this.state.questions.length}
+                content = <Round startTime={this.state.startTime} round={round} question={question}
+                                 totalQuestions={this.state.questions.length}
                                  part={this.state.part}/>;
                 break;
             default:
@@ -365,5 +382,5 @@ class Quiz extends React.Component {
 
 // ========================================
 const container = document.getElementById('root');
-const root = createRoot(container); // createRoot(container!) if you use TypeScript
+const root = createRoot(container);
 root.render(<Quiz/>);
