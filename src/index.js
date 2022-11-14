@@ -28,7 +28,7 @@ function Title(props) {
         <div className="logo"/>
         <span className="titleText">
         {props.loaded ?
-            "7e TC Sterrenbos quiz" :
+            props.title :
             <div className="lds-spinner">
                 <div></div>
                 <div></div>
@@ -213,6 +213,10 @@ class Quiz extends React.Component {
         if (roundIndex < this.state.rounds.length - 1) {
             const newRoundIndex = roundIndex + 1;
             this.toRound(newRoundIndex);
+        } else {
+            this.setAndStoreState({
+                show: 'EndCard'
+            })
         }
     }
 
@@ -348,7 +352,7 @@ class Quiz extends React.Component {
         let content;
         switch (this.state.show) {
             case 'Title':
-                content = <Title loaded={this.state.loaded}/>;
+                content = <Title title="7e TC Sterrenbos quiz" loaded={this.state.loaded}/>;
                 break;
             case 'RoundTitle':
                 const titleRound = this.getCurrentRound();
@@ -360,6 +364,9 @@ class Quiz extends React.Component {
                 content = <Round startTime={this.state.startTime} round={round} question={question}
                                  totalQuestions={this.state.questions.length}
                                  part={this.state.part}/>;
+                break;
+            case 'EndCard':
+                content = <Title title="Bedankt!" loaded="true"/>;
                 break;
             default:
                 console.error("Unknown show state " + this.state.show);
