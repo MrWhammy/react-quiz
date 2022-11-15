@@ -3,13 +3,34 @@ import {createRoot} from 'react-dom/client';
 import {getQuestions, getRounds} from './questions';
 import './index.css';
 
-function Question(props) {
+function QuestionFull(props) {
     return (
-        <div className="question">
+        <div className="questionFull">
             <img className='question-img' src={props.question.image} alt={props.question.number}></img>
             <div className="question-text">{props.question.question}</div>
         </div>
     );
+}
+
+function QuestionImage(props) {
+    return (
+        <div className="questionImage">
+            <img className='question-img' src={props.question.image} alt={props.question.number}></img>
+        </div>
+    );
+}
+
+
+function Question(props) {
+    switch (props.part) {
+        case "Full":
+            return <QuestionFull question={props.question} />;
+        case "Image":
+            return <QuestionImage question={props.question} />
+        default:
+            console.error("Unknown question part " + props.part)
+            break;
+    }
 }
 
 function Answer(props) {
@@ -22,6 +43,25 @@ function Answer(props) {
     );
 }
 
+function Spinner() {
+    return (
+        <div className="lds-spinner">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    );
+}
+
 function Title(props) {
     return (<div className="title">
         <header></header>
@@ -29,76 +69,58 @@ function Title(props) {
         <span className="titleText">
         {props.loaded ?
             props.title :
-            <div className="lds-spinner">
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-                <div></div>
-            </div>
+            <Spinner/>
         }
             </span>
         <footer></footer>
     </div>);
 }
 
-class RoundTitle extends React.Component {
-    render() {
-        return (
-            <div className="title">
-                <header>
-                    <h1>7e TC Sterrenbos quiz</h1>
-                </header>
-                <div className="logo"/>
-                <div className='roundTitle'>
-                    <span className="roundTitleText">{this.props.round.title}</span>
-                    {this.props.part === 'Answer' &&
-                    <span className="roundTitleAnswer">De antwoorden</span>
-                    }
-                </div>
-                <footer><h3>{this.props.round.title}</h3></footer>
-            </div>
-        );
-    }
-}
-
-class Round extends React.Component {
-
-    render() {
-        let content;
-        switch (this.props.part) {
-            case "Question":
-                content = <Question question={this.props.question}/>
-                break;
-            case "Answer":
-                content = <Answer question={this.props.question}/>
-                break;
-            default:
-                console.error("Unknown part " + this.props.part);
-                break;
-        }
-        return (
-            <div className="round">
-                <header>
-                    <h1>7e TC Sterrenbos quiz</h1>
-                </header>
-                <div className="logo"/>
-                {content}
-                <footer><h3>{this.props.round.title} -
-                    Vraag {this.props.question.number}/{this.props.totalQuestions}</h3></footer>
-                {this.props.part === 'Question' &&
-                <Timer startTime={this.props.startTime}/>
+function RoundTitle(props) {
+    return (
+        <div className="title">
+            <header>
+                <h1>7e TC Sterrenbos quiz</h1>
+            </header>
+            <div className="logo"/>
+            <div className='roundTitle'>
+                <span className="roundTitleText">{props.round.title}</span>
+                {props.part === 'Answer' &&
+                <span className="roundTitleAnswer">De antwoorden</span>
                 }
             </div>
-        );
+            <footer><h3>{props.round.title}</h3></footer>
+        </div>
+    );
+}
+
+function Round(props) {
+    let content;
+    switch (props.part) {
+        case "Question":
+            content = <Question question={props.question} part={props.questionPart}/>
+            break;
+        case "Answer":
+            content = <Answer question={props.question}/>
+            break;
+        default:
+            console.error("Unknown part " + props.part);
+            break;
     }
+    return (
+        <div className="round">
+            <header>
+                <h1>7e TC Sterrenbos quiz</h1>
+            </header>
+            <div className="logo"/>
+            {content}
+            <footer><h3>{props.round.title} -
+                Vraag {props.question.number}/{props.totalQuestions}</h3></footer>
+            {props.part === 'Question' &&
+            <Timer startTime={props.startTime}/>
+            }
+        </div>
+    );
 }
 
 class Timer extends React.Component {
@@ -180,22 +202,29 @@ class Quiz extends React.Component {
     }
 
     nextQuestion() {
-        const questionIndex = this.state.currentQuestionIndex;
-        if (questionIndex < this.state.questions.length - 1) {
+        if (this.state.part === "Question" && this.state.questionPart === "Image") {
             this.setAndStoreState({
-                currentQuestionIndex: (questionIndex + 1)
-            });
+                questionPart: "Full"
+            })
         } else {
-            switch (this.state.part) {
-                case "Question":
-                    this.toAnswerRoundTitle();
-                    break;
-                case "Answer":
-                    this.toNextRound();
-                    break;
-                default:
-                    console.error("Unknown part " + this.props.part);
-                    break;
+            const questionIndex = this.state.currentQuestionIndex;
+            if (questionIndex < this.state.questions.length - 1) {
+                this.setAndStoreState({
+                    questionPart: "Image",
+                    currentQuestionIndex: (questionIndex + 1)
+                });
+            } else {
+                switch (this.state.part) {
+                    case "Question":
+                        this.toAnswerRoundTitle();
+                        break;
+                    case "Answer":
+                        this.toNextRound();
+                        break;
+                    default:
+                        console.error("Unknown part " + this.props.part);
+                        break;
+                }
             }
         }
     }
@@ -314,6 +343,7 @@ class Quiz extends React.Component {
             currentQuestionIndex: this.state.currentQuestionIndex,
             show: this.state.show,
             part: this.state.part,
+            questionPart: this.state.questionPart,
             startTime: this.state.startTime,
         })));
     }
@@ -328,6 +358,7 @@ class Quiz extends React.Component {
                         this.setState({
                             show: storedState.show,
                             part: storedState.part,
+                            questionPart: storedState.questionPart,
                             currentRoundIndex: storedState.currentRoundIndex,
                             currentQuestionIndex: storedState.currentQuestionIndex,
                             startTime: storedState.startTime,
@@ -362,7 +393,7 @@ class Quiz extends React.Component {
                 const round = this.getCurrentRound();
                 const question = this.getCurrentQuestion();
                 content = <Round startTime={this.state.startTime} round={round} question={question}
-                                 totalQuestions={this.state.questions.length}
+                                 totalQuestions={this.state.questions.length} questionPart={this.state.questionPart}
                                  part={this.state.part}/>;
                 break;
             case 'EndCard':
