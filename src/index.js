@@ -3,10 +3,16 @@ import {createRoot} from 'react-dom/client';
 import {getQuestions, getRounds} from './questions';
 import './index.css';
 
+const QuizTitle = "7e TC Sterrenbos quiz"
+
+function Image(props) {
+    return <img className='question-img' src={props.question.image} alt={props.question.number}></img>
+}
+
 function QuestionFull(props) {
     return (
         <div className="questionFull">
-            <img className='question-img' src={props.question.image} alt={props.question.number}></img>
+            <Image question={props.question} />
             <div className="question-text">{props.question.question}</div>
         </div>
     );
@@ -15,7 +21,7 @@ function QuestionFull(props) {
 function QuestionImage(props) {
     return (
         <div className="questionImage">
-            <img className='question-img' src={props.question.image} alt={props.question.number}></img>
+            <Image question={props.question} />
         </div>
     );
 }
@@ -23,9 +29,9 @@ function QuestionImage(props) {
 
 function Question(props) {
     switch (props.part) {
-        case "Full":
+        case QuestionPart.Full:
             return <QuestionFull question={props.question} />;
-        case "Image":
+        case QuestionPart.Image:
             return <QuestionImage question={props.question} />
         default:
             console.error("Unknown question part " + props.part)
@@ -80,12 +86,12 @@ function RoundTitle(props) {
     return (
         <div className="title">
             <header>
-                <h1>7e TC Sterrenbos quiz</h1>
+                <h1>{QuizTitle}</h1>
             </header>
             <div className="logo"/>
             <div className='roundTitle'>
                 <span className="roundTitleText">{props.round.title}</span>
-                {props.part === 'Answer' &&
+                {props.part === RoundPart.Answer &&
                 <span className="roundTitleAnswer">De antwoorden</span>
                 }
             </div>
@@ -97,10 +103,10 @@ function RoundTitle(props) {
 function Round(props) {
     let content;
     switch (props.part) {
-        case "Question":
+        case RoundPart.Question:
             content = <Question question={props.question} part={props.questionPart}/>
             break;
-        case "Answer":
+        case RoundPart.Answer:
             content = <Answer question={props.question}/>
             break;
         default:
@@ -110,13 +116,13 @@ function Round(props) {
     return (
         <div className="round">
             <header>
-                <h1>7e TC Sterrenbos quiz</h1>
+                <h1>{QuizTitle}</h1>
             </header>
             <div className="logo"/>
             {content}
             <footer><h3>{props.round.title} -
                 Vraag {props.question.number}/{props.totalQuestions}</h3></footer>
-            {props.part === 'Question' &&
+            {props.part === RoundPart.Question &&
             <Timer startTime={props.startTime}/>
             }
         </div>
@@ -152,11 +158,28 @@ class Timer extends React.Component {
     }
 }
 
+const Show = Object.freeze({
+    Title: "Title",
+    RoundTitle: "RoundTitle",
+    Round: "Round",
+    EndCard: "EndCard",
+});
+
+const RoundPart = Object.freeze({
+    Question: "Question",
+    Answer: "Answer",
+})
+
+const QuestionPart = Object.freeze({
+    Image: "Image",
+    Full: "Full",
+})
+
 class Quiz extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: 'Title',
+            show: Show.Title,
             rounds: [],
             questions: [],
             currentRoundIndex: -1,
@@ -179,13 +202,13 @@ class Quiz extends React.Component {
 
     next() {
         switch (this.state.show) {
-            case 'Title':
+            case Show.Title:
                 this.toNextRound();
                 break;
-            case 'RoundTitle':
+            case Show.RoundTitle:
                 this.startRound();
                 break;
-            case 'Round':
+            case Show.Round:
                 this.nextQuestion();
                 break;
             default:
@@ -196,29 +219,30 @@ class Quiz extends React.Component {
 
     startRound() {
         this.setAndStoreState({
-            show: 'Round',
-            currentQuestionIndex: 0
+            show: Show.Round,
+            currentQuestionIndex: 0,
+            questionPart: QuestionPart.Image,
         });
     }
 
     nextQuestion() {
-        if (this.state.part === "Question" && this.state.questionPart === "Image") {
+        if (this.state.part === RoundPart.Question && this.state.questionPart === QuestionPart.Image) {
             this.setAndStoreState({
-                questionPart: "Full"
+                questionPart: QuestionPart.Full
             })
         } else {
             const questionIndex = this.state.currentQuestionIndex;
             if (questionIndex < this.state.questions.length - 1) {
                 this.setAndStoreState({
-                    questionPart: "Image",
+                    questionPart: QuestionPart.Image,
                     currentQuestionIndex: (questionIndex + 1)
                 });
             } else {
                 switch (this.state.part) {
-                    case "Question":
+                    case RoundPart.Question:
                         this.toAnswerRoundTitle();
                         break;
-                    case "Answer":
+                    case RoundPart.Answer:
                         this.toNextRound();
                         break;
                     default:
@@ -231,8 +255,8 @@ class Quiz extends React.Component {
 
     toAnswerRoundTitle() {
         this.setAndStoreState({
-            show: 'RoundTitle',
-            part: 'Answer',
+            show: Show.RoundTitle,
+            part: RoundPart.Answer,
             currentQuestionIndex: 0
         });
     }
@@ -244,7 +268,7 @@ class Quiz extends React.Component {
             this.toRound(newRoundIndex);
         } else {
             this.setAndStoreState({
-                show: 'EndCard'
+                show: Show.EndCard
             })
         }
     }
@@ -252,8 +276,8 @@ class Quiz extends React.Component {
     toRound(newRoundIndex) {
         getQuestions(this.getRound(newRoundIndex).sheet).then(questions => {
             this.setAndStoreState({
-                show: 'RoundTitle',
-                part: 'Question',
+                show: Show.RoundTitle,
+                part: RoundPart.Question,
                 questions: questions,
                 currentQuestionIndex: 0,
                 currentRoundIndex: newRoundIndex,
@@ -270,12 +294,12 @@ class Quiz extends React.Component {
 
     previous(force) {
         switch (this.state.show) {
-            case 'RoundTitle':
+            case Show.RoundTitle:
                 if (force) {
                     this.toPreviousRound();
                 }
                 break;
-            case 'Round':
+            case Show.Round:
                 this.previousQuestion(force);
                 break;
             default:
@@ -290,12 +314,12 @@ class Quiz extends React.Component {
             this.setAndStoreState({currentQuestionIndex: (question - 1)});
         } else {
             switch (this.state.part) {
-                case "Question":
+                case RoundPart.Question:
                     if (force) {
                         this.toRound(this.state.currentRoundIndex);
                     }
                     break;
-                case "Answer":
+                case RoundPart.Answer:
                     this.toAnswerRoundTitle();
                     break;
                 default:
@@ -334,7 +358,7 @@ class Quiz extends React.Component {
     }
 
     loadState() {
-        return JSON.parse(window.localStorage.getItem("QUIZ_STATE") || "{}");
+        return JSON.parse(window.localStorage.getItem("QUIZ_STATE") || "{}")
     }
 
     setAndStoreState(newState) {
@@ -352,8 +376,8 @@ class Quiz extends React.Component {
         getRounds().then(rounds => {
             let storedState = this.loadState();
             switch (storedState.show) {
-                case 'RoundTitle':
-                case 'Round':
+                case Show.RoundTitle:
+                case Show.Round:
                     getQuestions(rounds[storedState.currentRoundIndex].sheet).then(questions => {
                         this.setState({
                             show: storedState.show,
@@ -382,21 +406,21 @@ class Quiz extends React.Component {
     render() {
         let content;
         switch (this.state.show) {
-            case 'Title':
-                content = <Title title="7e TC Sterrenbos quiz" loaded={this.state.loaded}/>;
+            case Show.Title:
+                content = <Title title={QuizTitle} loaded={this.state.loaded}/>;
                 break;
-            case 'RoundTitle':
+            case Show.RoundTitle:
                 const titleRound = this.getCurrentRound();
                 content = <RoundTitle round={titleRound} part={this.state.part}/>;
                 break;
-            case 'Round':
+            case Show.Round:
                 const round = this.getCurrentRound();
                 const question = this.getCurrentQuestion();
                 content = <Round startTime={this.state.startTime} round={round} question={question}
                                  totalQuestions={this.state.questions.length} questionPart={this.state.questionPart}
                                  part={this.state.part}/>;
                 break;
-            case 'EndCard':
+            case Show.EndCard:
                 content = <Title title="Bedankt!" loaded="true"/>;
                 break;
             default:
