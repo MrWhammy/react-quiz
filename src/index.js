@@ -3,7 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {getQuestions, getRounds} from './questions';
 import './index.css';
 
-const QuizTitle = "7e TC Sterrenbos quiz"
+const QuizTitle = "8e TC Sterrenbos quiz"
 
 function Image(props) {
     return <img className='question-img' src={props.question.image} alt={props.question.number}></img>
